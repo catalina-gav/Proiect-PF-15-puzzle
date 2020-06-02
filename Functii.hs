@@ -1,11 +1,11 @@
 module Functii where
 import Game
 --afisez valoarea pentru o pozitie data din matrice
-getValoare :: Puzzle -> Poz -> Cell
+getValoare :: Puzzle -> Poz -> Tile
 getValoare puzzle (pos1, pos2) = puzzle!!pos1!!pos2
 --afisez pozitia pentru valoarea data
 
-findPoz :: Puzzle ->Cell-> Poz
+findPoz :: Puzzle ->Tile-> Poz
 findPoz puzzle  x = head [ (i, j) | i <- [0 .. size - 1], j <- [0 .. size - 1], (getValoare puzzle (i, j)) == x]
     where
         size = length puzzle
@@ -29,7 +29,7 @@ swapPuzzleValues puzzle pos1 pos2 = changeMatrixValue pos1 (changeMatrixValue po
         val1 = getValoare puzzle pos1
         val2 = getValoare puzzle pos2
 --comanda data de jucator
-move :: Cell -> Puzzle ->Puzzle
+move :: Tile -> Puzzle ->Puzzle
 move number puzzle= swapPuzzleValues (puzzle) ( findPoz puzzle number) (firstZero puzzle,secondZero puzzle) 
 --functie pentru a schimba valoarea unui element din lista la pozitia data
 changeListValue :: Int -> [a] -> (a -> a) -> [a]

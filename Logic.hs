@@ -6,26 +6,27 @@ import System.Random
 import Data.Array.IO
 import Control.Monad
 import System.IO.Unsafe
+import System.Random.Shuffle
 
 isCoordCorrect = inRange ((0, 0), (n - 1, n - 1))
 solution = [[13,14,15,0], [9,10,11,12], [5,6,7,8], [1,2,3,4]]
 checkGameOver :: Game -> Bool
 checkGameOver game
-    | boards == solution = True
+    | matrix == solution = True
     | otherwise = False
-    where boards = puzzle game
+    where matrix = puzzle game
 mouseHandle :: Game -> (Int, Int) -> Game
-mouseHandle game cellCoord
-	| checkGameOver game == True = game { gameState = GameOver}
-    | isCoordCorrect cellCoord &&  (elem (fst(cellCoord),snd(cellCoord)) (availableZero matrix) == True) =
+mouseHandle game tileCoord
+	|checkGameOver game == True = game {gameState = GameOver}
+    |isCoordCorrect tileCoord &&  (elem (fst(tileCoord),snd(tileCoord)) (availableZero matrix) == True) =
          game {  puzzle = newPuzzle
 				,moves = score +1
 			  }
-    | otherwise = game
+    |otherwise = game
     where 
 		 score = moves game
 		 matrix = puzzle game
-		 newPuzzle =  move (getValoare matrix (fst(cellCoord),snd(cellCoord))) (puzzle game) 
+		 newPuzzle =  move (getValoare matrix (fst(tileCoord),snd(tileCoord))) (puzzle game) 
 
 keyHandle :: Game -> String -> Game
 keyHandle game key
@@ -57,14 +58,14 @@ keyHandle game key
 		leftMatrix = move ( getValoare matrix  (firstZero matrix,(secondZero matrix)+1)) matrix
 		rightMatrix = move (getValoare matrix (firstZero matrix,(secondZero matrix)-1)) matrix
 		
-mousePosAsCellCoord :: (Float, Float) -> (Int, Int)
-mousePosAsCellCoord (x, y) = ( floor ((y + (fromIntegral screenHeight * 0.5)) / cellHeight)
-                             , floor ((x + (fromIntegral screenWidth * 0.5)) / cellWidth)
+mousePosAsTileCoord :: (Float, Float) -> (Int, Int)
+mousePosAsTileCoord (x, y) = ( floor ((y + (fromIntegral height * 0.5)) / tileHeight)
+                             , floor ((x + (fromIntegral width * 0.5)) / tileWidth)
                              )
 updateGame :: Event -> Game -> Game
 updateGame (EventKey (MouseButton LeftButton) _ _ mousePos) game =
     case gameState game of
-		Running -> mouseHandle game $ mousePosAsCellCoord mousePos
+		Running -> mouseHandle game $ mousePosAsTileCoord mousePos
 		GameOver-> game
 		Instructions -> game
 		
@@ -96,8 +97,8 @@ updateGame (EventKey (Char char) Down _ _) game
 		Instructions -> game
 		| char == 'n' = 
 		case gameState game of
-		Running -> initialGame (unsafePerformIO $ shuffle [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]) Running
-		GameOver -> initialGame (unsafePerformIO $ shuffle [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]) Running
+		Running -> initialGame (unsafePerformIO $ shuffleM [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]) Running
+		GameOver -> initialGame (unsafePerformIO $ shuffleM [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]) Running
 		Instructions -> game
 		| char == 'i' = 
 		case gameState game of
@@ -131,17 +132,3 @@ updateGame (EventKey (SpecialKey KeyDown) Down _ _) game =
 		GameOver-> game
 		Instructions -> game
 updateGame _ game = game
-
-shuffle :: [a] -> IO [a]
-shuffle xs = do
-        ar <- newArray n xs
-        forM [1..n] $ \i -> do
-            j <- randomRIO (i,n)
-            vi <- readArray ar i
-            vj <- readArray ar j
-            writeArray ar j vi
-            return vj
-  where
-    n = length xs
-    newArray :: Int -> [a] -> IO (IOArray Int a)
-    newArray n xs =  newListArray (1,n) xs
